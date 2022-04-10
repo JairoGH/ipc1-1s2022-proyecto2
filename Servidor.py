@@ -5,6 +5,7 @@ from flask import render_template
 app = Flask(__name__)
 Libros = []
 Prestamistas = []
+Prestamos = []
 
 with open('Libros.json') as json_Libros:
         Libros = json.load(json_Libros)
@@ -12,6 +13,8 @@ with open('Libros.json') as json_Libros:
 with open('Prestamistas.json') as json_Prestamista:
         Prestamistas = json.load(json_Prestamista)
         
+with open('Prestamos.json') as json_Prestamo:
+        prestamos = json.load(json_Prestamo)
     
 @app.route('/')
 def hello():
@@ -39,35 +42,20 @@ def Crear_Libro():
     except:
         return {'msg': 'ocurrió un error en el servidor'},500
 
-@app.route('/book/<isbn>', methods=['GET'])
-def Consultar_Libro(isbn):
-    Libros = Leer_Libros()
-    try:
-        for lib in Libros:
-            if(lib['isbn'] == int(isbn)):
-                return{'isbn': lib['isbn'],'author' : lib['author'],'title': lib['title'],'edition':lib['edition'],'year':lib['year'],'no_copies':lib['no_copies'],'no_available_copies':lib['no_available_copies'],'no_bookshelf':lib['no_bookshelf'],'no_bookshelf_row':lib['no_bookshelf_row']},200
-        return {'msg' : 'No Existe Ningun Libro Con El ISBN Ingresado'},400
-    except:
-        return {'msg': 'ocurrió un error en el servidor'},500
-
 @app.route('/book', methods=['PUT'])
 def Actualizar_Libros():
     actuali_libro = request.get_json()
     try:
-        if("isbn" in actuali_libro and "author" in actuali_libro and "title" in actuali_libro and "edition" in actuali_libro and "year" in actuali_libro and "no_bookshelf" in actuali_libro and "no_bookshelf_row" in actuali_libro):
+        if("isbn" in actuali_libro and "author" in actuali_libro and "title" in actuali_libro and "year" in actuali_libro):
             Libros = Leer_Libros()
             for lib in Libros:
                 if(lib['isbn'] == actuali_libro['isbn']):
                     lib['author'] = actuali_libro['author']
                     lib['title'] = actuali_libro['title']
-                    lib['edition'] = actuali_libro['edition']
                     lib['year'] = actuali_libro['year']
-                    lib['no_bookshelf'] = actuali_libro['no_bookshelf']
-                    lib ['no_bookshelf_row'] = actuali_libro['no_bookshelf_row']
                     GuardarLibros(Libros)
                     return {'msg' : 'Libro Actualizado con Exito'},200
-                else:
-                    return {'msg' : 'El ISBN Ingresado No Existe'},400
+            return {'msg' : 'El ISBN Ingresado No Existe'},400
         return {'msg' : 'Faltan Datos Del Libro'},400        
     except:
         return {'msg' : 'ocurrió un error en el servidor'},500    
@@ -122,6 +110,45 @@ def Crear_Prestamista():
     except:
         return{'msg' : 'Ocurrio un Error en el Servidor'},500
                 
+@app.route('/person/<cui>', methods=['GET'])
+def Consultar_Prestamista(cui):
+    Prestamistas = Leer_Prestamistas()
+    try:
+        for pres in Prestamistas:
+            if(pres['cui'] == cui):
+                return{'cui': pres['cui'],'first_name' : pres['first_name'],'last_name': pres['last_name']}
+    except:
+        return {'msg': 'ocurrió un error en el servidor'},500
+
+@app.route('/borrow', methods=['POST'])
+def Prestar_Libro():
+    Prestamistas = Leer_Prestamistas()
+    Libros = Leer_Libros()
+    cui = request.get_json()
+    for pres in Prestamistas:
+            if(pres['cui'] == cui['cui']):
+                for lib in Libros:
+                    if(lib['isbn'] == cui['isbn']):
+                        if(lib['no_available_copies']>=0):
+                            lib['no_available_copies'] -=1
+                            GuardarLibros(Libros)
+                            return{'msg' : 'Libro Prestado con Exito'},200
+                        else:
+                            return{'msg' : 'No Existen Copias Disponibles de Este Libro'},400
+                return{'msg' : 'El ISBN No Corresponde Con Ningun Libro Registrado'},400
+            else:
+                return {'msg' : 'El CUI Ingresado No Corresponde con Ningun Prestamista'},400                 
+
+@app.route('/borrow/<uuid>', methods = ['PATCH'])
+def Devolver_Libro(uuid):
+    Prestamistas = Leer_Prestamistas()
+    Libros = Leer_Libros()
+    for pres in Prestamistas:
+        if(pres['uuid'] == uuid):
+            for lib in Libros:
+                if(lib['isbn'] == pres['isbn']):
+                    if(lib['no_available_copies' == lib['no_copies']]): 
+                        return {} 
 
 def Leer_Libros():
     libros = None
@@ -144,5 +171,16 @@ def Guardar_Prestamista(pres):
     json_Prestamista = json.dumps(pres)
     with open('Prestamistas.json', "w") as outfile:
         outfile.write(json_Prestamista)
+      
+def Leer_Prestamo():
+    prestamos = None
+    with open('Prestamos.json') as json_Prestamo:
+        prestamos = json.load(json_Prestamo)
+    return prestamos      
+        
+def Guardar_Prestamo(prestamo):
+    json_Prestamo = json.dumps(prestamo)
+    with open('Prestamos.json', "w") as outfile:
+        outfile.write(json_Prestamo)
 
 app.run()

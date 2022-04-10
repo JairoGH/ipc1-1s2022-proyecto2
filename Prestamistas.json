@@ -1,1 +1,17 @@
-[{"cui": "2993", "last_name": "Gomez", "first_name": "Jairo"}]
+[
+    {
+        "cui": "1",
+        "last_name": "Gomez",
+        "first_name": "Jairo"
+    },
+    {
+        "cui": "2",
+        "last_name": "Hernandez",
+        "first_name": "Adelso"
+    },
+    {
+        "cui": "3",
+        "last_name": "Gomez",
+        "first_name": "Gomez"
+    }
+]
