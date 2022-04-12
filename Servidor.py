@@ -2,6 +2,8 @@ import json
 from xmlrpc.client import Boolean
 from flask import Flask, request
 from flask import render_template
+from datetime import datetime
+
 app = Flask(__name__)
 Libros = []
 Prestamistas = []
@@ -14,7 +16,7 @@ with open('Prestamistas.json') as json_Prestamista:
         Prestamistas = json.load(json_Prestamista)
         
 with open('Prestamos.json') as json_Prestamo:
-        prestamos = json.load(json_Prestamo)
+        Prestamos = json.load(json_Prestamo)
     
 @app.route('/')
 def hello():
@@ -113,31 +115,55 @@ def Crear_Prestamista():
 @app.route('/person/<cui>', methods=['GET'])
 def Consultar_Prestamista(cui):
     Prestamistas = Leer_Prestamistas()
+    datos_prestamo = {}
     try:
         for pres in Prestamistas:
             if(pres['cui'] == cui):
-                return{'cui': pres['cui'],'first_name' : pres['first_name'],'last_name': pres['last_name']}
+                datos_prestamo['first_name'] = pres['first_name']
+                datos_prestamo['last_name'] = pres['last_name']
+                return{}
     except:
         return {'msg': 'ocurrió un error en el servidor'},500
 
 @app.route('/borrow', methods=['POST'])
 def Prestar_Libro():
-    Prestamistas = Leer_Prestamistas()
     Libros = Leer_Libros()
+    Prestamistas = Leer_Prestamistas()
+    Prestamos = Leer_Prestamo()
+    prestamo = {}
+    prestamo_activo = False
     cui = request.get_json()
-    for pres in Prestamistas:
+    try:
+        for pres in Prestamistas: 
             if(pres['cui'] == cui['cui']):
-                for lib in Libros:
-                    if(lib['isbn'] == cui['isbn']):
-                        if(lib['no_available_copies']>=0):
-                            lib['no_available_copies'] -=1
-                            GuardarLibros(Libros)
-                            return{'msg' : 'Libro Prestado con Exito'},200
-                        else:
-                            return{'msg' : 'No Existen Copias Disponibles de Este Libro'},400
-                return{'msg' : 'El ISBN No Corresponde Con Ningun Libro Registrado'},400
-            else:
-                return {'msg' : 'El CUI Ingresado No Corresponde con Ningun Prestamista'},400                 
+                for prest in Prestamos: 
+                    if(prest['cui'] == cui['cui']):
+                        prestamo_activo = True
+                if(not prestamo_activo):
+                    for lib in Libros:
+                        if(lib['isbn'] == cui['isbn']):
+                            if(lib['no_available_copies']>0):
+                                lib['no_available_copies'] -=1
+                                prestamo['uuid'] = cui['cui'] + '_' + str(cui['isbn'])
+                                prestamo['cui'] = cui['cui']
+                                prestamo['isbn'] = cui['isbn']
+                                prestamo['title'] = lib['title']
+                                now = datetime.now()
+                                prestamo['fecha_prestamo'] = now.strftime('%d-%m-%Y %H:%M:%S')
+                                print(Prestamos)
+                                Prestamos.append(prestamo)
+                                prestamo = {}
+                                GuardarLibros(Libros)
+                                Guardar_Prestamo(Prestamos)
+                                return{'msg' : 'Libro Prestado con Exito'},200
+                            else:
+                                return{'msg' : 'No Existen Copias Disponibles de Este Libro'},400
+                    return{'msg' : 'El ISBN No Corresponde Con Ningun Libro Registrado'},400
+                else:
+                    return{'msg' : 'El Prestamista Posee un Prestamo Activo'},400
+        return {'msg' : 'El CUI Ingresado No Corresponde con Ningun Prestamista'},400                 
+    except:
+        return {'msg': 'ocurrió un error en el servidor'},500
 
 @app.route('/borrow/<uuid>', methods = ['PATCH'])
 def Devolver_Libro(uuid):

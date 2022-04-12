@@ -1,1 +1,30 @@
-[]
+[
+    {
+        "uuid": "1_1",
+        "cui": "1",
+        "isbn": 1,
+        "title": "Libro1",
+        "fecha_prestamo": "11-04-2022 21:55:56"
+    },
+    {
+        "uuid": "2_2",
+        "cui": "2",
+        "isbn": 2,
+        "title": "Libro2",
+        "fecha_prestamo": "11-04-2022 21:56:01"
+    },
+    {
+        "uuid": "3_3",
+        "cui": "3",
+        "isbn": 3,
+        "title": "Libro3",
+        "fecha_prestamo": "11-04-2022 21:56:07"
+    },
+    {
+        "uuid": "5_5",
+        "cui": "5",
+        "isbn": 5,
+        "title": "Libro77",
+        "fecha_prestamo": "11-04-2022 21:56:21"
+    }
+]
