@@ -70,25 +70,26 @@ def Buscar_Libro():
     year_to = request.args.get('year_to')
     author = request.args.get('author')
     resultados = []
-    
-    if(title != None):
-        for lib in Libros:
-            if(lib['title'] == title):
-                resultados.append(lib)
-        return json.dumps(resultados),200
-              
-    if(author != None):
-        for lib in Libros:
-            if(lib['author'] == author):
-                resultados.append(lib)
-        return json.dumps(resultados),200
-        
-    if(year_from != None and year_to != None): 
-        for lib in Libros:
-            if(lib['year'] >= int(year_from) and lib['year'] <= int(year_to)):
-                resultados.append(lib)
-        return json.dumps(resultados),200
-    return {'msg': 'ocurrió un error en el servidor'},500
+    try:
+        if(title != None):
+            for lib in Libros:
+                if(lib['title'] == title):
+                    resultados.append(lib)
+            return json.dumps(resultados),200
+
+        if(author != None):
+            for lib in Libros:
+                if(lib['author'] == author):
+                    resultados.append(lib)
+            return json.dumps(resultados),200
+
+        if(year_from != None and year_to != None): 
+            for lib in Libros:
+                if(lib['year'] >= int(year_from) and lib['year'] <= int(year_to)):
+                    resultados.append(lib)
+            return json.dumps(resultados),200
+    except:
+        return {'msg': 'ocurrió un error en el servidor'},500
 
 @app.route('/person', methods=['POST'])
 def Crear_Prestamista():
@@ -115,13 +116,26 @@ def Crear_Prestamista():
 @app.route('/person/<cui>', methods=['GET'])
 def Consultar_Prestamista(cui):
     Prestamistas = Leer_Prestamistas()
+    Prestamos = Leer_Prestamo()
     datos_prestamo = {}
+    record = {}
     try:
         for pres in Prestamistas:
             if(pres['cui'] == cui):
                 datos_prestamo['first_name'] = pres['first_name']
                 datos_prestamo['last_name'] = pres['last_name']
-                return{}
+                datos_prestamo['record'] = []
+                for rec in Prestamos:
+                    if(cui == rec['cui']):
+                        record['uuid'] = rec['uuid']
+                        record['isbn'] = rec['isbn']
+                        record['title'] = rec['title']
+                        record['lend_date'] = rec['lend_date']
+                        record['return_date'] = rec['return_date']
+                        datos_prestamo['record'].append(record)
+                        record = {}
+                return datos_prestamo,200
+        return {'msg' : 'El CUI Ingresado NO Corresponde a Un Prestamista'},400
     except:
         return {'msg': 'ocurrió un error en el servidor'},500
 
@@ -138,7 +152,8 @@ def Prestar_Libro():
             if(pres['cui'] == cui['cui']):
                 for prest in Prestamos: 
                     if(prest['cui'] == cui['cui']):
-                        prestamo_activo = True
+                        if(prest['return_date'] == ''):
+                            prestamo_activo = True
                 if(not prestamo_activo):
                     for lib in Libros:
                         if(lib['isbn'] == cui['isbn']):
@@ -149,8 +164,8 @@ def Prestar_Libro():
                                 prestamo['isbn'] = cui['isbn']
                                 prestamo['title'] = lib['title']
                                 now = datetime.now()
-                                prestamo['fecha_prestamo'] = now.strftime('%d-%m-%Y %H:%M:%S')
-                                print(Prestamos)
+                                prestamo['lend_date'] = now.strftime('%d-%m-%Y %H:%M:%S')
+                                prestamo['return_date'] = ''
                                 Prestamos.append(prestamo)
                                 prestamo = {}
                                 GuardarLibros(Libros)
@@ -167,15 +182,26 @@ def Prestar_Libro():
 
 @app.route('/borrow/<uuid>', methods = ['PATCH'])
 def Devolver_Libro(uuid):
-    Prestamistas = Leer_Prestamistas()
     Libros = Leer_Libros()
-    for pres in Prestamistas:
-        if(pres['uuid'] == uuid):
-            for lib in Libros:
-                if(lib['isbn'] == pres['isbn']):
-                    if(lib['no_available_copies' == lib['no_copies']]): 
-                        return {} 
-
+    Prestamos = Leer_Prestamo()
+    try:
+        for pres in Prestamos:
+            if(pres['uuid'] == uuid):
+                for lib in Libros:
+                    if(pres['return_date'] == ""):
+                        if(pres['isbn'] == lib['isbn']):
+                            lib['no_available_copies'] += 1
+                        now = datetime.now()
+                        pres['return_date'] = now.strftime('%d-%m-%Y %H:%M:%S')
+                        Guardar_Prestamo(Prestamos)
+                        GuardarLibros(Libros)               
+                        return {'msg' : 'El Libro se ha Devuelto con Exito'},200
+                    else:
+                        return{'msg' : 'El Libro que Desea Devolver ya se ha Devuelto'},400
+        return{'msg' : 'No se ha Encontrado el UUID'},400
+    except:
+        return{'msg' : 'Error del Servidor'},500
+    
 def Leer_Libros():
     libros = None
     with open('Libros.json') as json_Libros:
