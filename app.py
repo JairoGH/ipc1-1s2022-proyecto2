@@ -3,6 +3,7 @@ import json
 from flask import Flask, request
 from datetime import datetime 
 app = Flask(__name__)
+DEBUG = True
 
 #Se Crean los Arreglos
 Libros = []
