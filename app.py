@@ -3,7 +3,6 @@ import json
 from flask import Flask, request
 from datetime import datetime 
 app = Flask(__name__)
-DEBUG = True
 
 #Se Crean los Arreglos
 Libros = []
@@ -25,7 +24,7 @@ with open('Prestamos.json') as json_Prestamo:
 #Se da un mensaje de inicio.    
 @app.route('/')
 def hello():
-    return {'Server' : 'ON'}
+    return {'Server' : 'ON'},200
 
 #ENDPOINT Crear Libro, Metodo POST
 @app.route('/book', methods=['POST'])
@@ -357,4 +356,4 @@ def Guardar_Prestamo(prestamo):
     with open('Prestamos.json', "w") as outfile:
         outfile.write(json_Prestamo)
 
-app.run()
+app.run(debug = True)
