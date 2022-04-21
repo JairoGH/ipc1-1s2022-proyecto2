@@ -356,4 +356,4 @@ def Guardar_Prestamo(prestamo):
     with open('Prestamos.json', "w") as outfile:
         outfile.write(json_Prestamo)
 
-app.run(debug = True)
+app.run(debug = True , host='0.0.0.0', port=80)
