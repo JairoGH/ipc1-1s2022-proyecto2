@@ -1,8 +1,11 @@
 #Se importan las librerias
 import json
 from flask import Flask, request
+from flask_cors import CORS
 from datetime import datetime 
+
 app = Flask(__name__)
+CORS(app)
 
 #Se Crean los Arreglos
 Libros = []
@@ -356,4 +359,4 @@ def Guardar_Prestamo(prestamo):
     with open('Prestamos.json', "w") as outfile:
         outfile.write(json_Prestamo)
 
-app.run(debug = True , host='0.0.0.0', port=80)
+app.run(debug = True)
