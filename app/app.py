@@ -357,5 +357,3 @@ def Guardar_Prestamo(prestamo):
     #Se escribe en el archivo Prestamos.json
     with open('Prestamos.json', "w") as outfile:
         outfile.write(json_Prestamo)
-
-app.run(debug = True)
