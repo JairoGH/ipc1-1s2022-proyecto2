@@ -3,7 +3,6 @@ import json
 from flask import Flask, request
 from flask_cors import CORS
 from datetime import datetime 
-
 app = Flask(__name__)
 CORS(app)
 
@@ -24,7 +23,7 @@ with open('Prestamistas.json') as json_Prestamista:
 with open('Prestamos.json') as json_Prestamo:
         Prestamos = json.load(json_Prestamo)
  
-#Se da un mensaje de inicio.    
+#Se da un mensaje de inicio.
 @app.route('/')
 def hello():
     return {'Server' : 'ON'},200
@@ -37,7 +36,7 @@ def Crear_Libro():
     registrado = False
     try:
         #Se valida que los campos ingresados se guarden en el archivo libro.json
-        if("isbn" in libro and "author" in libro and "title" in libro and "edition" in libro and "year" in libro and "no_copies" in libro and "no_available_copies" in libro and "no_bookshelf" in libro and "no_bookshelf_row" in libro):
+        if("isbn" in libro and "author" in libro and "title" in libro and "year" in libro and "no_copies" in libro and "no_available_copies" in libro):
             Libros = Leer_Libros()
             #Se recorre el arreglo Libro
             for lib in Libros:
